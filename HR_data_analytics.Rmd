@@ -1,0 +1,266 @@
+---
+title: 'R Project  : Exploratory Data Analysis in R'
+Name: Suchita Negi
+Email: snegi@scu.edu
+---
+
+## **Introduction**: Exploratory Analysis of IBM Employee Atrrition .
+In EDA we visualize the factors that lead to employee attrition and explore important factors that affect the attrition in the company.
+
+**Dataset selection: ** As my interest leads towards People Analytics, I have selected the dataset from Kaggle that can help me undersatand HR basics for analysis using R.
+The data set was downloaded from Kaggle dataset:
+https://www.kaggle.com/pavansubhasht/ibm-hr-analytics-attrition-dataset
+
+```{r}
+## Installing packages required for data analysis
+if (!require(dplyr))
+  install.packages("dplyr")
+if (!require(ggplot2))
+  install.packages("ggplot2")
+if (!require(gridExtra))
+  install.packages("gridExtra")
+
+## Loading required libraries
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+```
+
+
+## Initial Analysis
+
+**Loading the data set in R : **
+Reading the csv file located at the local directory.
+The dataset selected ws clean and therefore didnot require additional cleaning.
+```{r}
+
+setwd("D:/Academic/SCU_Q1/R_Programming/R_Studio")
+#Loading the dataset in R
+hr_data <- read.csv("WA_Fn-UseC_-HR-Employee-Attrition.csv")
+#checking the data if loaded correctly
+head(hr_data)
+
+```
+
+**Analyse the structutre of the data : **
+The dataframe consists of 1470 rows and 35 columns.
+The data set have various numerical and categorical data.
+```{r}
+str(hr_data)
+```
+
+**Analyse the data quality : **
+Analysing the data quality by summarizing dataset to observe min, max , mean , median of differnt columns.
+```{r}
+#summarize the data columns
+summary(hr_data)
+```
+
+## Data Analysis for Attrition 
+
+Dataset is analysed by observing different factors affecting the attrition in the company.
+
+**Libraries used: ** "dplyr" library to manipulate dataset and subset/filter data and group gender.
+                      "ggplot2" library to plot bar graph for attrition in each gender.
+                      "gridextra" library to display multiple plots in grid format.
+
+**Atrrition count with respect to Gender : **
+Blue Bar: Male
+Pink Bar: Female
+"Yes":Employee Attrition
+"No": Employee Retained
+Observation:
+We observe that the attrition count is higher in Male than in Female.
+Number of Male employee Attrition: 150
+Number of Female employee Attrition: 87
+```{r}
+#Subset data for attrition and gender.
+attr_gender <- hr_data %>%
+  group_by(Attrition, Gender) %>%
+  summarise(emp_count = n(), na.rm = TRUE) %>%
+  ggplot(aes(x = Attrition, y = emp_count, fill = Gender)) +
+  labs(x = "Attrition" , y = " Number of Employee ") +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = c("pink", "darkblue")) +
+  ggtitle("Employee Attrition with respect to Gender") +
+  geom_text(aes(label = emp_count),
+            vjust = -0.2,
+            position = position_dodge(0.5))
+theme_bw()
+#Plot bar graph for attrition with respect to gender.
+grid.arrange(attr_gender)
+
+```
+
+**Atrrition count with respect to Departments : **
+We observe attrition count in each department as:
+HR : 12/63   = 19%
+R&D: 133/961 = 13.84%
+Sale: 92/446 = 20.63%
+The attrition count is higher in Research and development department but the attrition rate is much higher in Sales Department.
+
+```{r}
+#Subset data for attrition and department to plot graphs.
+dept <- hr_data %>%
+  group_by(Department) %>%
+  tally() %>%
+  ggplot(aes(x = Department, y = n, fill = Department)) +
+  labs(x = "Department" , y = " count ") +
+  ggtitle("     Employee in each Department ") +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  scale_fill_manual(values = c("blue", "orange", "yellow")) +
+  geom_text(aes(label = n), vjust = 0.3, position = position_dodge(0.5))
+  
+  dept_attr <- hr_data %>%
+  group_by(Department, Attrition) %>%
+  tally() %>%
+  ggplot(aes(x = Department, y = n, fill = Attrition)) +
+  labs(x = "Department" , y = " count ") +
+  ggtitle("    Attrition in each Department ") +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  scale_fill_manual(values = c("green", "red")) +
+  geom_text(aes(label = n), vjust = -0.1, position = position_dodge(0.5))
+  
+  #Plot bar graph for attrition with respect to each department.
+  grid.arrange(dept, dept_attr)
+```
+
+In this section we will analyze factors that could have been a possible influence on individuals leaving the organization.
+
+**Attrition affected by Work Life Balance : **
+WorkLifeBalance : 1- 'Bad' 
+                  2- 'Good' 
+                  3- 'Better'
+                  4- 'Best'
+
+Plotted the table to observe the number of people affected by the work life balance.
+
+```{r}
+#Subset data for WorkLifeBalance
+wrk_life_bal <- hr_data %>%
+  group_by(Attrition, WorkLifeBalance) %>%
+  summarise(emp_count = n())
+
+#set theme color for the table
+bluecol <- ttheme_minimal(
+  core = list(
+    bg_params = list(fill = blues9[1:4], col = "navyblue"),
+    fg_params = list(fontface = 4)
+  ),
+  colhead = list(fg_params = list(col = "Red", fontface = 4L)),
+  rowhead = list(fg_params = list(col = "NavyBlue", fontface = 2L))
+)
+
+#The two tables for employee work life balance with and without attrition.
+No_Attr_table <- tableGrob(wrk_life_bal[1:4, 1:3], theme = bluecol)
+Yes_Attr_table <- tableGrob(wrk_life_bal[5:8, 1:3], theme = bluecol)
+
+#Plot the table
+grid.arrange(top = "Work Life Balance Affecting Attrition ",
+             No_Attr_table,
+             Yes_Attr_table,
+             nrow = 1)
+```
+
+**Attrition affected by Job Satisfaction level : **
+Job Satisfaction: 1 'Low' 
+                  2 'Medium'
+                  3 'High'
+                  4 'Very High'      
+Plotted the table to observe the number of people affected by the job satisfaction level.
+```{r}
+#Subset data for WorkLifeBalance
+job_satis <- hr_data %>%
+  group_by(Attrition, JobSatisfaction) %>%
+  summarise(emp_count = n())
+
+#set theme color for the table
+bluecol <- ttheme_minimal(
+  core = list(
+    bg_params = list(fill = blues9[1:4], col = "navyblue"),
+    fg_params = list(fontface = 4)
+  ),
+  colhead = list(fg_params = list(col = "Red", fontface = 4L)),
+  rowhead = list(fg_params = list(col = "NavyBlue", fontface = 2L))
+)
+
+#The two tables for employee work life balance with and without attrition.
+job_no_attr_table <- tableGrob(job_satis[1:4, 1:3], theme = bluecol)
+job_yes_attr_table <- tableGrob(job_satis[5:8, 1:3], theme = bluecol)
+
+#Plot the table
+grid.arrange(top = "Job Satisfaction Affecting Attrition ",
+             job_no_attr_table,
+             job_yes_attr_table,
+             nrow = 1)
+```
+
+**Attrition with respect to work life balance and Distance from Home : **
+Then analysed the box plot which tells us the median of the data indicating how work life balance and jdistance from home together affects the attrition count in employees.
+The attrition mean is higher in employees staying away from home and having bad work life balance.
+
+```{r}
+#Subset data for WorkLifeBalance and distancefromhome to plot boxgraph
+wrk_life_bal_plot <- ggplot(
+  hr_data,
+  aes(
+    x = WorkLifeBalance,
+    y = DistanceFromHome,
+    group = WorkLifeBalance,
+    fill = WorkLifeBalance
+  )
+) +
+  geom_boxplot(alpha = 0.5, col = "Red") +
+  theme(legend.position = "none") +
+  theme_classic() +
+  facet_wrap( ~ Attrition) +
+  ggtitle("Attrition") +
+  theme(plot.title = element_text(hjust = 0.5))
+wrk_life_bal_plot
+
+```
+
+**Attrition affected by Income : **
+Analyse attrition with respect to various income group and observe how attrition is affecting employees at different income level.
+```{r}
+#Monthly income with respect to Atrrition
+income <- ggplot(hr_data,
+                 aes(x = MonthlyIncome, fill = Attrition)) +
+  geom_density(alpha = 0.7) +
+  scale_fill_manual(values = c("lightgreen", "darkred"))
+
+#Monthly rate income with respect to Atrrition
+monthly <- ggplot(hr_data,
+                  aes(x = MonthlyRate, fill = Attrition)) +
+  geom_density(alpha = 0.7) +
+  scale_fill_manual(values = c("lightgreen", "darkred"))
+
+#Daily rate income with respect to Atrrition
+daily <- ggplot(hr_data,
+                aes(x = DailyRate, fill = Attrition)) +
+  geom_density(alpha = 0.7) +
+  scale_fill_manual(values = c("lightgreen", "darkred"))
+
+#Hourly rate income with respect to Atrrition
+hourly <- ggplot(hr_data,
+                 aes(x = HourlyRate, fill = Attrition)) +
+  geom_density(alpha = 0.7) +
+  scale_fill_manual(values = c("lightgreen", "darkred"))
+
+#Plot each graph in grid format for income, monthly , daily and hourly
+grid.arrange(income,
+             monthly,
+             daily,
+             hourly,
+             ncol = 2,
+             nrow = 2)
+
+```
+
+## Conclusion
+The exploratory data analyses conducted on the HR dataset focuses on few factors affection the attrition count on Employee.
+The few factors analysed were attrition affected by some internal factors like Gender, different departments in company, income l.evels
+External factors affectin g were work life balance , distance from home, job satisfaction.
+This Analysis helps HR understand and take necessary steps to reduce the company attrition. 
